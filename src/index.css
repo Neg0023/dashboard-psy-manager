@@ -9,6 +9,12 @@
 }
 .psy-spin  { animation: psy-spin  .8s  linear        infinite; }
 .psy-pulse { animation: psy-pulse 1.4s ease-in-out   infinite; }
+
+@keyframes elo-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes elo-drawer-in  { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+.elo-cal::-webkit-scrollbar        { width: 10px; height: 10px; }
+.elo-cal::-webkit-scrollbar-thumb  { background: #22354e; border-radius: 6px; }
+.elo-cal::-webkit-scrollbar-track  { background: transparent; }
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
