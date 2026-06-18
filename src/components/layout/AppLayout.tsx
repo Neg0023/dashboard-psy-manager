@@ -1,0 +1,59 @@
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/features/auth/AuthContext'
+import { Button } from '@/components/ui/button'
+
+const NAV_ITEMS = [
+  { to: '/', label: 'Pacientes', end: true },
+  { to: '/agenda', label: 'Agenda', end: false },
+  { to: '/financeiro', label: 'Financeiro', end: false },
+  { to: '/formularios', label: 'Anamnese', end: false },
+]
+
+export function AppLayout() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
+  return (
+    <div className="min-h-svh bg-muted/30">
+      <header className="border-b bg-background">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-6">
+            <span className="text-lg font-semibold">Psy Manager</span>
+            <nav className="flex items-center gap-1">
+              {NAV_ITEMS.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-muted text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">{user?.email}</span>
+            <Button variant="outline" size="sm" onClick={handleLogout}>
+              Sair
+            </Button>
+          </div>
+        </div>
+      </header>
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <Outlet />
+      </main>
+    </div>
+  )
+}
