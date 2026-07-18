@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GoogleLogin } from '@react-oauth/google'
 import { useAuth } from './AuthContext'
 
-type View = 'inicial' | 'autenticando' | 'sucesso' | 'erro'
+type View = 'inicial' | 'sucesso' | 'erro'
 
 const PAGE: React.CSSProperties = {
   position: 'relative',
@@ -22,21 +22,10 @@ export function LoginPage() {
   const { login, isAuthenticated } = useAuth()
   const navigate = useNavigate()
   const [view, setView] = useState<View>('inicial')
-  const hiddenRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isAuthenticated) navigate('/', { replace: true })
   }, [isAuthenticated, navigate])
-
-  function triggerGoogle() {
-    setView('autenticando')
-    // pequeno delay para o estado visual atualizar antes do popup abrir
-    setTimeout(() => {
-      const btn = hiddenRef.current?.querySelector('div[role=button]')
-      if (btn) (btn as HTMLElement).click()
-      else setView('erro')
-    }, 80)
-  }
 
   function handleSuccess(credential: string) {
     login(credential)
@@ -46,18 +35,6 @@ export function LoginPage() {
 
   return (
     <div style={PAGE}>
-      {/* GoogleLogin fora da tela — precisa existir no DOM para o GIS inicializar */}
-      <div
-        ref={hiddenRef}
-        style={{ position: 'absolute', left: '-9999px', top: 0, width: '220px' }}
-        aria-hidden="true"
-      >
-        <GoogleLogin
-          onSuccess={(r) => r.credential && handleSuccess(r.credential)}
-          onError={() => setView('erro')}
-        />
-      </div>
-
       <div
         style={{
           width: '100%',
@@ -68,10 +45,11 @@ export function LoginPage() {
           textAlign: 'center',
         }}
       >
-        {view === 'inicial' && <InicialView onLogin={triggerGoogle} />}
-        {view === 'autenticando' && <AutenticandoView />}
+        {view === 'inicial' && (
+          <InicialView onSuccess={handleSuccess} onError={() => setView('erro')} />
+        )}
         {view === 'sucesso' && <SucessoView />}
-        {view === 'erro' && <ErroView onRetry={triggerGoogle} />}
+        {view === 'erro' && <ErroView onRetry={() => setView('inicial')} />}
       </div>
 
       <div
@@ -119,7 +97,13 @@ function Logo() {
   )
 }
 
-function InicialView({ onLogin }: { onLogin: () => void }) {
+function InicialView({
+  onSuccess,
+  onError,
+}: {
+  onSuccess: (credential: string) => void
+  onError: () => void
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 26 }}>
       <Logo />
@@ -131,45 +115,20 @@ function InicialView({ onLogin }: { onLogin: () => void }) {
           O cuidado que conecta
         </div>
       </div>
-      <button
-        onClick={onLogin}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 12,
-          background: '#eef4fa',
-          border: 'none',
-          borderRadius: 11,
-          padding: '15px 28px',
-          cursor: 'pointer',
-          fontFamily: "'Manrope', sans-serif",
-          boxShadow: '0 6px 18px rgba(0,0,0,0.30)',
-          transition: 'transform .15s ease',
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-        onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-      >
-        <span
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 6,
-            background: '#16243a',
-            color: '#7fb0d8',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            fontSize: 13,
-          }}
-        >
-          G
-        </span>
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#16243a' }}>
-          Entrar com o Google
-        </span>
-      </button>
+
+      {/* Botão oficial do Google Identity Services.
+          Renderiza dentro de um iframe do accounts.google.com; o clique real do
+          usuário abre o popup e onSuccess devolve o ID Token (credential). */}
+      <GoogleLogin
+        onSuccess={(r) => (r.credential ? onSuccess(r.credential) : onError())}
+        onError={onError}
+        theme="filled_blue"
+        size="large"
+        shape="pill"
+        text="signin_with"
+        width="240"
+      />
+
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: '#5f7896' }}>
         <span
           style={{
@@ -181,61 +140,6 @@ function InicialView({ onLogin }: { onLogin: () => void }) {
           }}
         />
         Acesso criptografado · privado
-      </div>
-    </div>
-  )
-}
-
-function AutenticandoView() {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 26 }}>
-      <div
-        className="psy-spin"
-        style={{
-          width: 54,
-          height: 54,
-          borderRadius: '50%',
-          border: '3px solid rgba(127,176,216,0.22)',
-          borderTopColor: '#7fb0d8',
-        }}
-      />
-      <div>
-        <div style={{ fontWeight: 700, fontSize: 21, color: '#eef4fa' }}>Autenticando…</div>
-        <div style={{ fontSize: 14, color: '#8aa3bf', marginTop: 8, lineHeight: 1.5 }}>
-          Verificando sua conta no Google
-        </div>
-      </div>
-      <button
-        disabled
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 12,
-          background: '#1c2c42',
-          border: '1px solid #2a3e58',
-          borderRadius: 11,
-          padding: '15px 28px',
-          cursor: 'default',
-          fontFamily: "'Manrope', sans-serif",
-          opacity: 0.6,
-        }}
-      >
-        <span
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 6,
-            background: '#2a3e58',
-            display: 'inline-block',
-          }}
-        />
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#8aa3bf' }}>
-          Entrar com o Google
-        </span>
-      </button>
-      <div className="psy-pulse" style={{ fontSize: 12, color: '#5f7896' }}>
-        conectando com segurança
       </div>
     </div>
   )
