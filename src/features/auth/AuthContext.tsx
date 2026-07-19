@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { googleLogout } from '@react-oauth/google'
 import { clearToken, getToken, setToken } from './tokenStore'
 import { decodeJwt } from '@/lib/jwt'
 import { setAuthErrorHandler } from '@/lib/authBridge'
@@ -38,12 +40,17 @@ function userFromToken(token: string | null): AuthUser | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<AuthUser | null>(() => userFromToken(getToken()))
 
   const logout = useCallback(() => {
     clearToken()
     setUser(null)
-  }, [])
+    // Encerra a sessão do Google Identity Services (evita re-login silencioso).
+    googleLogout()
+    // Descarta dados de pacientes/agenda/financeiro em cache.
+    queryClient.clear()
+  }, [queryClient])
 
   const login = useCallback((idToken: string) => {
     setToken(idToken)

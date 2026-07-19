@@ -82,6 +82,37 @@ function NavItem({ to, end, label, icon }: NavItemDef) {
   )
 }
 
+function LogoutButton() {
+  const { logout } = useAuth()
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <button
+      type="button"
+      onClick={logout}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title="Sair"
+      aria-label="Sair da conta"
+      style={{
+        marginLeft: 'auto', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: 32, height: 32, borderRadius: 9,
+        background: hovered ? '#16243a' : 'transparent',
+        border: 'none', cursor: 'pointer', padding: 0,
+        color: hovered ? '#cfe0ef' : '#5f7896',
+        transition: 'background .15s ease, color .15s ease',
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+        <polyline points="16 17 21 12 16 7" />
+        <line x1="21" y1="12" x2="9" y2="12" />
+      </svg>
+    </button>
+  )
+}
+
 export function AppLayout() {
   const { user } = useAuth()
   const initials = getInitials(user?.name, user?.email ?? '')
@@ -111,6 +142,7 @@ export function AppLayout() {
             <div style={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{displayName}</div>
             <div style={{ fontSize: 11, color: '#5f7896' }}>administrador</div>
           </div>
+          <LogoutButton />
         </div>
       </aside>
 
